@@ -27,6 +27,7 @@ export function GearCell() {
 	const stale = useTelemetryStore((state: TelemetryStoreState) => state.stale);
 
 	const [displayGear, setDisplayGear] = useState(gearLabel);
+	const [gearPulse, setGearPulse] = useState(false);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const gearTextRef = useRef<HTMLDivElement | null>(null);
@@ -41,18 +42,22 @@ export function GearCell() {
 		if (!invalid) {
 			setDisplayGear(gearLabel);
 
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
-			}
-		} else {
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
-			}
+			setGearPulse(true);
 
-			timeoutRef.current = setTimeout(() => {
-				setDisplayGear("N");
-			}, 100);
+			const timer = setTimeout(() => {
+				setGearPulse(false);
+			}, 120);
+
+			return () => clearTimeout(timer);
 		}
+
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+
+		timeoutRef.current = setTimeout(() => {
+			setDisplayGear("N");
+		}, 100);
 
 		return () => {
 			if (timeoutRef.current) {
@@ -118,13 +123,11 @@ export function GearCell() {
 			}
 
 			if (gearTextRef.current) {
-				if (red) {
-					gearTextRef.current.style.color = "#ff0055";
-					gearTextRef.current.classList.add("cyber-glow-red");
-				} else {
-					gearTextRef.current.style.color = "#f4f4f5";
-					gearTextRef.current.classList.remove("cyber-glow-red");
-				}
+				gearTextRef.current.style.color = red ? "#ff0055" : "#f4f4f5";
+
+				gearTextRef.current.style.textShadow = red
+					? "0 0 6px rgba(255,0,85,0.8), 0 0 18px rgba(255,0,85,0.45)"
+					: "0 0 8px rgba(255,255,255,0.12)";
 			}
 
 			if (rpm > 0) {
@@ -168,7 +171,6 @@ export function GearCell() {
 					flex
 					items-center
 					justify-center
-					overflow-visible
 				"
 				style={{
 					width: `min(100%, ${GEAR_MAX_DIAMETER_PX}px)`,
@@ -195,29 +197,39 @@ export function GearCell() {
 						items-center
 						justify-center
 						rounded-full
-						border
-						border-zinc-700/70
 						bg-gradient-to-b
-						from-[#252832]
-						via-[#0c0d12]
+						from-[#1c1d22]
+						via-[#09090b]
 						to-[#020203]
 					"
 					style={{
-						width: "82%",
+						width: "82.5%",
 						boxShadow: shiftOn
 							? `
-							0 0 40px rgba(255,0,85,0.55),
-							0 20px 45px rgba(0,0,0,0.95),
-							inset 0 2px 8px rgba(255,255,255,0.12),
-							inset 0 -20px 30px rgba(0,0,0,0.8)
+							0 20px 50px rgba(0,0,0,0.95),
+							inset 0 3px 12px rgba(255,255,255,0.12),
+							inset 0 -25px 45px rgba(0,0,0,0.9),
+							0 0 0 2px rgba(120,0,25,0.35)
 							`
 							: `
 							0 22px 50px rgba(0,0,0,0.95),
-							inset 0 2px 10px rgba(255,255,255,0.08),
-							inset 0 -25px 40px rgba(0,0,0,0.85)
+							inset 0 3px 12px rgba(255,255,255,0.08),
+							inset 0 -25px 45px rgba(0,0,0,0.85)
 							`,
 					}}
 				>
+					{/* JDM 紅色切削點綴 */}
+					<div
+						className="
+							absolute
+							inset-1
+							rounded-full
+							border
+							border-red-950/60
+						"
+					/>
+
+					{/* 金屬反光層 */}
 					<div
 						className="
 							absolute
@@ -228,13 +240,14 @@ export function GearCell() {
 						"
 					/>
 
+					{/* 內部機械陰影 */}
 					<div
 						className="
 							absolute
 							inset-5
 							rounded-full
 							border
-							border-zinc-800/70
+							border-black/80
 						"
 					/>
 
@@ -249,36 +262,32 @@ export function GearCell() {
 							gap-y-4
 						"
 					>
-						{/* Gear */}
 						<div
 							ref={gearTextRef}
-							className="
-		flex
-		items-center
-		justify-center
-		font-mono
-		font-black
-		leading-none
-		text-zinc-100
-		transition-all
-		duration-75
-	"
+							className={`
+								flex
+								items-center
+								justify-center
+								font-mono
+								font-black
+								leading-none
+								transition-transform
+								duration-100
+								${gearPulse ? "scale-110" : "scale-100"}
+							`}
 							style={{
 								fontSize: "clamp(72px,15vw,125px)",
 								fontWeight: 950,
-								letterSpacing: "-0.03em",
+								fontStyle: "italic",
+								letterSpacing: "-0.035em",
 								lineHeight: 1,
-								textAlign: "center",
-								transform: "translateX(-2px) translateY(2px)",
-								textShadow: shiftOn
-									? "0 0 18px rgba(255,0,85,0.45)"
-									: "0 0 10px rgba(255,255,255,0.15)",
+								transform: "translateX(-5px) translateY(1px)",
+								textShadow: "0 0 8px rgba(255,255,255,0.12)",
 							}}
 						>
 							{displayGear}
 						</div>
 
-						{/* Speed */}
 						<div
 							className="
 								flex
