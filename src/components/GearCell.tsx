@@ -73,8 +73,6 @@ export function GearCell() {
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-
 		let animationId: number;
 
 		const draw = () => {
@@ -94,11 +92,13 @@ export function GearCell() {
 
 			ctx.lineCap = "round";
 
-			ctx.lineWidth = 20;
-			ctx.strokeStyle = "#090a0f";
+			ctx.lineWidth = 22;
+			ctx.strokeStyle = "#08090d";
 
 			ctx.beginPath();
+
 			ctx.arc(cx, cy, radius, startAngle, startAngle + totalArc);
+
 			ctx.stroke();
 
 			if (rpm >= 80) {
@@ -128,11 +128,13 @@ export function GearCell() {
 			}
 
 			if (rpm > 0) {
-				ctx.lineWidth = 15;
+				ctx.lineWidth = 16;
 				ctx.strokeStyle = color;
 
 				ctx.beginPath();
+
 				ctx.arc(cx, cy, radius, startAngle, endAngle);
+
 				ctx.stroke();
 			}
 
@@ -141,7 +143,9 @@ export function GearCell() {
 
 		draw();
 
-		return () => cancelAnimationFrame(animationId);
+		return () => {
+			cancelAnimationFrame(animationId);
+		};
 	}, []);
 
 	return (
@@ -192,17 +196,26 @@ export function GearCell() {
 						justify-center
 						rounded-full
 						border
-						border-zinc-700/80
+						border-zinc-700/70
 						bg-gradient-to-b
-						from-[#1d2028]
-						via-[#07080c]
-						to-[#010102]
+						from-[#252832]
+						via-[#0c0d12]
+						to-[#020203]
 					"
 					style={{
-						width: "81.5%",
+						width: "82%",
 						boxShadow: shiftOn
-							? "0 0 35px rgba(255,0,85,0.5), inset 0 0 25px rgba(255,0,85,0.15)"
-							: "0 18px 35px rgba(0,0,0,0.95), inset 0 0 20px rgba(255,255,255,0.04)",
+							? `
+							0 0 40px rgba(255,0,85,0.55),
+							0 20px 45px rgba(0,0,0,0.95),
+							inset 0 2px 8px rgba(255,255,255,0.12),
+							inset 0 -20px 30px rgba(0,0,0,0.8)
+							`
+							: `
+							0 22px 50px rgba(0,0,0,0.95),
+							inset 0 2px 10px rgba(255,255,255,0.08),
+							inset 0 -25px 40px rgba(0,0,0,0.85)
+							`,
 					}}
 				>
 					<div
@@ -211,17 +224,17 @@ export function GearCell() {
 							inset-2
 							rounded-full
 							border
-							border-black/90
+							border-white/5
 						"
 					/>
 
 					<div
 						className="
 							absolute
-							inset-4
+							inset-5
 							rounded-full
 							border
-							border-zinc-800/50
+							border-zinc-800/70
 						"
 					/>
 
@@ -233,45 +246,39 @@ export function GearCell() {
 							flex-col
 							items-center
 							justify-center
-							gap-y-3
+							gap-y-4
 						"
 					>
-						<span
+						{/* Gear */}
+						<div
+							ref={gearTextRef}
 							className="
-								text-[8px]
-								font-black
-								tracking-[0.45em]
-								text-zinc-500
-								racing-text
-							"
+		flex
+		items-center
+		justify-center
+		font-mono
+		font-black
+		leading-none
+		text-zinc-100
+		transition-all
+		duration-75
+	"
+							style={{
+								fontSize: "clamp(72px,15vw,125px)",
+								fontWeight: 950,
+								letterSpacing: "-0.03em",
+								lineHeight: 1,
+								textAlign: "center",
+								transform: "translateX(-2px) translateY(2px)",
+								textShadow: shiftOn
+									? "0 0 18px rgba(255,0,85,0.45)"
+									: "0 0 10px rgba(255,255,255,0.15)",
+							}}
 						>
-							GEAR
-						</span>
-						<div className="overflow-visible px-[6px]">
-							<div
-								ref={gearTextRef}
-								className="
-			font-mono
-			text-[60px]
-			font-black
-			leading-none
-			whitespace-nowrap
-			overflow-visible
-			text-zinc-100
-			transition-all
-			duration-75
-		"
-								style={{
-									fontStyle: "italic",
-									letterSpacing: "-0.06em",
-									paddingRight: "0.08em",
-									paddingLeft: "0.02em",
-								}}
-							>
-								{displayGear}
-							</div>
+							{displayGear}
 						</div>
 
+						{/* Speed */}
 						<div
 							className="
 								flex
@@ -283,11 +290,10 @@ export function GearCell() {
 							<div
 								className="
 									font-mono
-									text-[15px]
+									text-[18px]
 									font-black
-									tracking-[0.08em]
-									text-zinc-300
-									racing-text
+									tracking-[0.12em]
+									text-white
 								"
 							>
 								{formatNumber(speedDisplay, 0)}
@@ -297,7 +303,7 @@ export function GearCell() {
 								className="
 									text-[8px]
 									font-bold
-									tracking-[0.35em]
+									tracking-[0.4em]
 									text-zinc-600
 									racing-text
 								"
