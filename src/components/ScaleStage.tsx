@@ -13,26 +13,43 @@ export function ScaleStage({
 }: ScaleStageProps) {
 	const outerRef = useRef<HTMLDivElement | null>(null);
 	const [scale, setScale] = useState(1);
+	const [isLandscape, setIsLandscape] = useState(false);
 
 	useEffect(() => {
 		const outer = outerRef.current;
 		if (!outer) return;
 
 		const recalc = () => {
-			const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+			const width = outer.clientWidth;
+			const height = outer.clientHeight;
 
-			const viewportHeight =
-				window.visualViewport?.height ?? window.innerHeight;
+			const landscape = width > height;
+			setIsLandscape(landscape);
 
-			const safeWidth = viewportWidth;
-			const safeHeight = viewportHeight;
+			// HUD 主要設計為直向手機
+			if (landscape) {
+				setScale(1);
+				return;
+			}
+
+			// 扣除 safe-area 後計算真正可用空間
+			const safeWidth =
+				width -
+				parseFloat(getComputedStyle(outer).paddingLeft.replace("px", "")) -
+				parseFloat(getComputedStyle(outer).paddingRight.replace("px", ""));
+
+			const safeHeight =
+				height -
+				parseFloat(getComputedStyle(outer).paddingTop.replace("px", "")) -
+				parseFloat(getComputedStyle(outer).paddingBottom.replace("px", ""));
 
 			const scaleX = safeWidth / referenceWidth;
 			const scaleY = safeHeight / referenceHeight;
 
+			// 保留上下安全空間
 			const nextScale = Math.min(scaleX, scaleY);
 
-			setScale(nextScale);
+			setScale(Math.max(nextScale, 0.1));
 		};
 
 		recalc();
@@ -40,15 +57,11 @@ export function ScaleStage({
 		const observer = new ResizeObserver(recalc);
 		observer.observe(outer);
 
-		window.visualViewport?.addEventListener("resize", recalc);
 		window.addEventListener("resize", recalc);
 		window.addEventListener("orientationchange", recalc);
 
 		return () => {
 			observer.disconnect();
-
-			window.visualViewport?.removeEventListener("resize", recalc);
-
 			window.removeEventListener("resize", recalc);
 			window.removeEventListener("orientationchange", recalc);
 		};
@@ -57,25 +70,38 @@ export function ScaleStage({
 	return (
 		<div
 			ref={outerRef}
-			className="h-[100dvh] w-screen overflow-hidden bg-black flex items-center justify-center"
+			className="relative overflow-hidden bg-black"
 			style={{
+				width: "100vw",
+				height: "100dvh",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				boxSizing: "border-box",
+
 				paddingTop: "env(safe-area-inset-top)",
 				paddingBottom: "env(safe-area-inset-bottom)",
 				paddingLeft: "env(safe-area-inset-left)",
 				paddingRight: "env(safe-area-inset-right)",
 			}}
 		>
-			<div
-				style={{
-					width: referenceWidth,
-					height: referenceHeight,
-					transform: `scale(${scale})`,
-					transformOrigin: "center center",
-					flexShrink: 0,
-				}}
-			>
-				{children}
-			</div>
+			{isLandscape ? (
+				<div className="absolute inset-0 flex items-center justify-center text-zinc-600 text-xs tracking-[0.3em]">
+					PORTRAIT MODE ONLY
+				</div>
+			) : (
+				<div
+					style={{
+						width: referenceWidth,
+						height: referenceHeight,
+						flexShrink: 0,
+						transform: `scale(${scale})`,
+						transformOrigin: "center center",
+					}}
+				>
+					{children}
+				</div>
+			)}
 		</div>
 	);
 }
