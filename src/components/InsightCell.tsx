@@ -39,7 +39,7 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 					w-full
 					flex-col
 					justify-center
-					gap-3
+					gap-2
 					rounded-[20px]
 					bg-zinc-950/85
 					px-3
@@ -81,6 +81,7 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 					</div>
 				</div>
 
+				{/* IP 輸入框佔滿一行 */}
 				<div className="flex gap-2">
 					<input
 						value={ipInput}
@@ -92,54 +93,53 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 							flex-1
 							rounded-lg
 							border
-							border-zinc-800
-							bg-black/70
-							px-2
+							border-zinc-700
+							bg-black/50
+							px-3
 							py-2
 							font-mono
-							text-[16px]
+							text-[3px]
 							text-zinc-200
 							outline-none
-							placeholder:text-zinc-700
-							focus:border-zinc-500
+							placeholder:text-zinc-600
+							focus:border-red-500/50
+							tracking-[0.1em]
+							overflow-x-auto
+							whitespace-nowrap
 						"
 					/>
+				</div>
 
+				{/* 按鈕放置在下方 */}
+				<div className="flex justify-end pt-1">
 					<button
 						onClick={handleConnect}
 						className="
 							rounded-lg
 							border
 							border-zinc-700
-							bg-zinc-900
-							px-3
-							text-[8px]
+							bg-gradient-to-b
+							from-zinc-800
+							to-zinc-900
+							px-4
+							py-1.5
+							text-[7px]
 							font-black
 							tracking-widest
 							text-zinc-300
 							racing-text
 							active:scale-95
+							shadow-[0_2px_4px_rgba(0,0,0,0.3)]
+							hover:from-zinc-700
+							hover:to-zinc-800
+							w-fit
 						"
 					>
 						LINK
 					</button>
 				</div>
 
-				<div
-					className="
-						flex
-						items-center
-						gap-2
-						text-[6px]
-						tracking-[0.18em]
-						text-zinc-600
-						racing-text
-					"
-				>
-					<div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-
-					<span>{wsTarget}</span>
-				</div>
+				{/* 移除了 ws://... 顯示區域 */}
 			</div>
 		</div>
 	);

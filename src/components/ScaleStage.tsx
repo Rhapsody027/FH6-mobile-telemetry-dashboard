@@ -85,7 +85,7 @@ export function ScaleStage({
 				paddingRight: "env(safe-area-inset-right)",
 			}}
 		>
-			{isLandscape ? (
+			{isLandscape && false ? (
 				<div className="absolute inset-0 flex items-center justify-center text-zinc-600 text-xs tracking-[0.3em]">
 					PORTRAIT MODE ONLY
 				</div>

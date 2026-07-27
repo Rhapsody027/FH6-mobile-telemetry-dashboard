@@ -125,12 +125,7 @@ export function GearCell() {
 		<div
 			className={`flex h-full w-full items-center justify-center transition-opacity duration-300 ${stale ? "opacity-30" : ""}`}
 		>
-			<div
-				className="relative flex aspect-square w-[92%] max-w-[320px] items-center justify-center"
-				style={{
-					width: "min(92%, 320px)",
-				}}
-			>
+			<div className="relative flex aspect-square w-[92%] max-w-[320px] items-center justify-center">
 				<div
 					className="absolute inset-0 rounded-full border border-[#272a35] bg-gradient-to-b from-[#1b1d24] via-[#050608] to-[#010102]"
 					style={{
