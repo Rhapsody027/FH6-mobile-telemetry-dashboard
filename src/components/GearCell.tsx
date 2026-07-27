@@ -1,3 +1,4 @@
+// src/components/GearCell.tsx
 import { useEffect, useRef, useState } from "react";
 import { useTelemetryStore, type TelemetryStoreState } from "../useTelemetry";
 
@@ -20,30 +21,22 @@ export function GearCell() {
 	);
 	const stale = useTelemetryStore((state: TelemetryStoreState) => state.stale);
 
-	const rpmPercent = useTelemetryStore(
-		(state: TelemetryStoreState) => state.rpmPercent,
-	);
-
 	const [displayGear, setDisplayGear] = useState(gearLabel);
 
-	const lastValidGearRef = useRef(gearLabel);
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const gearTextRef = useRef<HTMLDivElement | null>(null);
+	const isRedStateRef = useRef(false);
 
 	useEffect(() => {
 		const invalid =
 			gearLabel === "15" || Number(gearLabel) > 10 || gearLabel === "";
 
 		if (!invalid) {
-			lastValidGearRef.current = gearLabel;
 			setDisplayGear(gearLabel);
-
 			if (timeoutRef.current) clearTimeout(timeoutRef.current);
 		} else {
 			if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
 			timeoutRef.current = setTimeout(() => {
 				setDisplayGear("N");
 			}, 100);
@@ -58,142 +51,149 @@ export function GearCell() {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
 
-		canvas.width = 180;
-		canvas.height = 180;
+		const size = 256;
+		canvas.width = size;
+		canvas.height = size;
 
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
-		let frame: number;
+		let animationId: number;
 
 		const draw = () => {
-			ctx.clearRect(0, 0, 180, 180);
-
-			const cx = 90;
-			const cy = 90;
-			const radius = 76;
-
-			const start = Math.PI * 0.75;
-			const arc = Math.PI * 1.5;
+			ctx.clearRect(0, 0, size, size);
 
 			const rpm = useTelemetryStore.getState().rpmPercent;
-			const end = start + (arc * rpm) / 100;
+			const cx = size / 2;
+			const cy = size / 2;
+			const radius = 108;
 
-			ctx.lineWidth = 8;
+			const startAngle = Math.PI * 0.75;
+			const totalArc = Math.PI * 1.5;
+			const endAngle = startAngle + (rpm / 100) * totalArc;
+
 			ctx.lineCap = "round";
 
+			ctx.lineWidth = 14;
 			ctx.strokeStyle = "#050508";
 			ctx.beginPath();
-			ctx.arc(cx, cy, radius, start, start + arc);
+			ctx.arc(cx, cy, radius, startAngle, startAngle + totalArc);
 			ctx.stroke();
 
-			let color = "#f4f4f5";
-
 			if (rpm >= 95) {
+				isRedStateRef.current = true;
+			} else if (rpm < 91) {
+				isRedStateRef.current = false;
+			}
+
+			let color = "#FFFFFF";
+			let isRed = false;
+
+			if (isRedStateRef.current) {
 				color = "#FF0055";
+				isRed = true;
 			} else if (rpm >= 85) {
 				color = "#FBBF24";
 			}
 
-			if (rpm > 0) {
-				ctx.strokeStyle = color;
-				ctx.lineWidth = 7;
+			if (gearTextRef.current) {
+				if (isRed) {
+					gearTextRef.current.style.color = "#FF0055";
+					gearTextRef.current.classList.add("cyber-glow-red");
+				} else {
+					gearTextRef.current.style.color = "#F4F4F5";
+					gearTextRef.current.classList.remove("cyber-glow-red");
+				}
+			}
 
+			if (rpm > 0) {
+				ctx.lineWidth = 10;
+				ctx.strokeStyle = color;
 				ctx.beginPath();
-				ctx.arc(cx, cy, radius, start, end);
+				ctx.arc(cx, cy, radius, startAngle, endAngle);
 				ctx.stroke();
 			}
 
-			frame = requestAnimationFrame(draw);
+			animationId = requestAnimationFrame(draw);
 		};
 
 		draw();
-
-		return () => cancelAnimationFrame(frame);
+		return () => cancelAnimationFrame(animationId);
 	}, []);
 
 	return (
 		<div
-			className={`flex h-full w-full items-center justify-center ${
-				stale ? "opacity-30" : ""
-			}`}
+			className={`flex h-full w-full items-center justify-center transition-opacity duration-300 ${stale ? "opacity-30" : ""}`}
 		>
-			{/* 
-				主角比例調整：
-				原本 h-44/w-44
-				降低到 h-40/w-40
-				避免壓迫周圍 telemetry
-			*/}
-			<div className="relative h-40 w-40 flex items-center justify-center">
+			<div
+				className="relative flex aspect-square w-[92%] max-w-[320px] items-center justify-center"
+				style={{
+					width: "min(92%, 320px)",
+				}}
+			>
 				<div
-					className="relative z-10 flex h-32 w-32 items-center justify-center rounded-full border border-[#272a35] bg-gradient-to-b from-[#1b1d24] via-[#050608] to-[#010102]"
+					className="absolute inset-0 rounded-full border border-[#272a35] bg-gradient-to-b from-[#1b1d24] via-[#050608] to-[#010102]"
 					style={{
 						boxShadow: shiftOn
-							? "0 12px 25px rgba(255,0,85,.35)"
-							: "0 12px 22px rgba(0,0,0,.9)",
+							? "0 0 35px rgba(255,0,85,0.55)"
+							: "0 18px 35px rgba(0,0,0,0.9)",
 					}}
+				/>
+
+				<div className="absolute inset-[7%] rounded-full border border-black/90 pointer-events-none" />
+
+				<div
+					className="
+						relative
+						z-20
+						flex
+						h-full
+						w-full
+						flex-col
+						items-center
+						justify-center
+						text-center
+					"
 				>
-					<div className="absolute inset-[6px] rounded-full border border-black/90" />
+					<span className="w-full text-center text-[clamp(6px,1.5vw,10px)] font-black tracking-[0.25em] text-zinc-500 racing-text select-none leading-none">
+						GEAR
+					</span>
 
-					<div className="relative z-20 flex h-full w-full flex-col items-center justify-center">
-						<span className="text-[8px] font-black tracking-[0.25em] text-zinc-500 racing-text leading-none">
-							GEAR
+					<div
+						ref={gearTextRef}
+						className="
+							relative
+							z-20
+							mt-[2%]
+							w-full
+							text-center
+							font-mono
+							text-[clamp(38px,10vw,82px)]
+							font-black
+							leading-none
+							tracking-tight
+							racing-text
+							text-zinc-100
+							whitespace-nowrap
+						"
+					>
+						{displayGear}
+					</div>
+
+					<div className="mt-[2%] flex w-full flex-col items-center justify-center text-center">
+						<div className="w-full text-center font-mono text-[clamp(16px,4vw,30px)] font-black text-white racing-text leading-none">
+							{formatNumber(speedDisplay, 0)}
+						</div>
+
+						<span className="w-full text-center text-[clamp(5px,1vw,8px)] font-bold tracking-widest text-zinc-500 racing-text leading-none">
+							KM/H
 						</span>
-
-						<div
-							ref={gearTextRef}
-							className="
-								mt-1
-								font-mono
-								text-5xl
-								font-black
-								leading-none
-								racing-text
-								text-zinc-100
-							"
-						>
-							{displayGear}
-						</div>
-
-						<div className="mt-2 flex flex-col items-center">
-							<div
-								className="
-								font-mono
-								text-lg
-								font-black
-								text-white
-								racing-text
-								leading-none
-							"
-							>
-								{formatNumber(speedDisplay)}
-							</div>
-
-							<span
-								className="
-								text-[7px]
-								font-bold
-								tracking-widest
-								text-zinc-500
-								racing-text
-							"
-							>
-								KM/H
-							</span>
-						</div>
 					</div>
 				</div>
 
 				<canvas
 					ref={canvasRef}
-					className="
-						absolute
-						inset-0
-						h-full
-						w-full
-						pointer-events-none
-						z-0
-					"
+					className="pointer-events-none absolute inset-0 z-0 h-full w-full"
 				/>
 			</div>
 		</div>

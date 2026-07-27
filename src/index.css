@@ -53,3 +53,18 @@
   background-size: 100% 3px;
   pointer-events: none;
 }
+
+html,
+body,
+#root {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	touch-action: none;
+}
+
+input,
+textarea,
+select {
+	font-size: 16px;
+}
