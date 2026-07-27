@@ -68,7 +68,7 @@ export function LapDeltaCell() {
 					className={`
 						mt-2
 						font-mono
-						text-[clamp(20px,4vw,30px)]
+						text-[clamp(15px,3.5vw,25px)]
 						font-black
 						leading-none
 						tracking-tight
