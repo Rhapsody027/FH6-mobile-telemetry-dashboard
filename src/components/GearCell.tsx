@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTelemetryStore, type TelemetryStoreState } from "../useTelemetry";
 
+const GEAR_MAX_DIAMETER_PX = 420;
+
 function formatNumber(value: number, fractionDigits = 0): string {
 	return new Intl.NumberFormat("en-US", {
 		maximumFractionDigits: fractionDigits,
@@ -51,7 +53,7 @@ export function GearCell() {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
 
-		const size = 256;
+		const size = 512;
 		canvas.width = size;
 		canvas.height = size;
 
@@ -66,7 +68,7 @@ export function GearCell() {
 			const rpm = useTelemetryStore.getState().rpmPercent;
 			const cx = size / 2;
 			const cy = size / 2;
-			const radius = 108;
+			const radius = 216;
 
 			const startAngle = Math.PI * 0.75;
 			const totalArc = Math.PI * 1.5;
@@ -125,15 +127,15 @@ export function GearCell() {
 		<div
 			className={`flex h-full w-full items-center justify-center transition-opacity duration-300 ${stale ? "opacity-30" : ""}`}
 		>
-			<div className="relative flex aspect-square w-[92%] max-w-[320px] items-center justify-center">
-				<div
-					className="absolute inset-0 rounded-full border border-[#272a35] bg-gradient-to-b from-[#1b1d24] via-[#050608] to-[#010102]"
-					style={{
-						boxShadow: shiftOn
-							? "0 0 35px rgba(255,0,85,0.55)"
-							: "0 18px 35px rgba(0,0,0,0.9)",
-					}}
-				/>
+		<div className="relative flex aspect-square items-center justify-center" style={{ width: `min(95%, ${GEAR_MAX_DIAMETER_PX}px)` }}>
+			<div
+				className="absolute inset-0 rounded-full border border-[#272a35] bg-gradient-to-b from-[#1b1d24] via-[#050608] to-[#010102]"
+				style={{
+					boxShadow: shiftOn
+						? "0 0 35px rgba(255,0,85,0.55)"
+						: "0 18px 35px rgba(0,0,0,0.9)",
+				}}
+			/>
 
 				<div className="absolute inset-[7%] rounded-full border border-black/90 pointer-events-none" />
 
