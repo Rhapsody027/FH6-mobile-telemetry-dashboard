@@ -301,7 +301,11 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => {
 				activeWs = null;
 			}
 			activeWsUrl = "";
-			set({ connected: false, stale: true });
+			// 🔧 FIX: 之前這裡沒有清空 telemetry，導致斷線/切換 Hub 後
+			// telemetry 仍然是上一筆殘留資料，讓所有依賴
+			// `!telemetry` 判斷待機狀態的元件 (例如 GearCell 的
+			// idleMode) 永遠誤判成「還在開車」，待機動畫因此完全不會觸發。
+			set({ connected: false, stale: true, telemetry: null });
 		},
 
 		// 🚀 【完全移除舊第三方套件 import，改為直接對接我們手刻的本地原生 MdnsBridge 插件】
@@ -355,6 +359,9 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => {
 			set({
 				connected: false,
 				stale: true,
+				// 🔧 FIX: 同上，斷線時要把 telemetry 歸零，
+				// idleMode（= !telemetry）才能正確重新變成 true。
+				telemetry: null,
 				gearLabel: "N",
 				speedDisplay: 0,
 				gForceDot: { x: 50, y: 50 },
