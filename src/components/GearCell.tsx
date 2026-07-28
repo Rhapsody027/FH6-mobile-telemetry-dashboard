@@ -20,10 +20,6 @@ export function GearCell() {
 		(state: TelemetryStoreState) => state.speedDisplay,
 	);
 
-	const shiftOn = useTelemetryStore(
-		(state: TelemetryStoreState) => state.shiftOn,
-	);
-
 	const stale = useTelemetryStore((state: TelemetryStoreState) => state.stale);
 
 	const [displayGear, setDisplayGear] = useState(gearLabel);
@@ -46,7 +42,7 @@ export function GearCell() {
 
 			const timer = setTimeout(() => {
 				setGearPulse(false);
-			}, 120);
+			}, 150);
 
 			return () => clearTimeout(timer);
 		}
@@ -97,15 +93,15 @@ export function GearCell() {
 
 			ctx.lineCap = "round";
 
+			// RPM base ring
 			ctx.lineWidth = 22;
 			ctx.strokeStyle = "#08090d";
 
 			ctx.beginPath();
-
 			ctx.arc(cx, cy, radius, startAngle, startAngle + totalArc);
-
 			ctx.stroke();
 
+			// RPM state
 			if (rpm >= 80) {
 				isRedStateRef.current = true;
 			} else if (rpm < 76) {
@@ -123,15 +119,23 @@ export function GearCell() {
 			}
 
 			if (gearTextRef.current) {
-				gearTextRef.current.style.color = red ? "#ff0055" : "#f4f4f5";
+				gearTextRef.current.style.color = red ? "#ff0055" : "#e9e9ec";
 
 				gearTextRef.current.style.textShadow = red
-					? "0 0 6px rgba(255,0,85,0.8), 0 0 18px rgba(255,0,85,0.45)"
-					: "0 0 8px rgba(255,255,255,0.12)";
+					? `
+						0 0 4px rgba(255,0,85,.9),
+						0 0 14px rgba(255,0,85,.55),
+						0 0 30px rgba(255,0,85,.25)
+					`
+					: `
+						0 1px 1px rgba(0,0,0,.9),
+						0 -1px 0 rgba(255,255,255,.18),
+						0 0 6px rgba(255,255,255,.08)
+					`;
 			}
 
 			if (rpm > 0) {
-				ctx.lineWidth = 16;
+				ctx.lineWidth = 18;
 				ctx.strokeStyle = color;
 
 				ctx.beginPath();
@@ -146,9 +150,7 @@ export function GearCell() {
 
 		draw();
 
-		return () => {
-			cancelAnimationFrame(animationId);
-		};
+		return () => cancelAnimationFrame(animationId);
 	}, []);
 
 	return (
@@ -198,27 +200,21 @@ export function GearCell() {
 						justify-center
 						rounded-full
 						bg-gradient-to-b
-						from-[#1c1d22]
+						from-[#202126]
 						via-[#09090b]
 						to-[#020203]
 					"
 					style={{
-						width: "82.5%",
-						boxShadow: shiftOn
-							? `
-							0 20px 50px rgba(0,0,0,0.95),
-							inset 0 3px 12px rgba(255,255,255,0.12),
-							inset 0 -25px 45px rgba(0,0,0,0.9),
-							0 0 0 2px rgba(120,0,25,0.35)
-							`
-							: `
+						width: "84.5%",
+						boxShadow: `
 							0 22px 50px rgba(0,0,0,0.95),
-							inset 0 3px 12px rgba(255,255,255,0.08),
-							inset 0 -25px 45px rgba(0,0,0,0.85)
-							`,
+							inset 0 3px 15px rgba(255,255,255,0.08),
+							inset 0 -30px 55px rgba(0,0,0,0.9),
+							inset 0 0 35px rgba(0,0,0,0.35)
+						`,
 					}}
 				>
-					{/* JDM 紅色切削點綴 */}
+					{/* CNC red edge */}
 					<div
 						className="
 							absolute
@@ -229,18 +225,22 @@ export function GearCell() {
 						"
 					/>
 
-					{/* 金屬反光層 */}
+					{/* Curved glass reflection */}
 					<div
 						className="
 							absolute
 							inset-2
 							rounded-full
-							border
-							border-white/5
+							opacity-40
+							pointer-events-none
 						"
+						style={{
+							background:
+								"linear-gradient(135deg,rgba(255,255,255,0.12),transparent 35%,transparent 65%,rgba(255,255,255,0.04))",
+						}}
 					/>
 
-					{/* 內部機械陰影 */}
+					{/* Inner mechanical layer */}
 					<div
 						className="
 							absolute
@@ -259,9 +259,9 @@ export function GearCell() {
 							flex-col
 							items-center
 							justify-center
-							gap-y-4
 						"
 					>
+						{/* Gear */}
 						<div
 							ref={gearTextRef}
 							className={`
@@ -272,24 +272,34 @@ export function GearCell() {
 								font-black
 								leading-none
 								transition-transform
-								duration-100
-								${gearPulse ? "scale-110" : "scale-100"}
+								duration-75
+								ease-out
+								${gearPulse ? "scale-[1.1]" : "scale-100"}
 							`}
 							style={{
-								fontSize: "clamp(72px,15vw,125px)",
+								fontSize: "clamp(78px,16vw,132px)",
 								fontWeight: 950,
 								fontStyle: "italic",
-								letterSpacing: "-0.035em",
-								lineHeight: 1,
-								transform: "translateX(-5px) translateY(1px)",
-								textShadow: "0 0 8px rgba(255,255,255,0.12)",
+								letterSpacing: "-0.055em",
+								lineHeight: 0.9,
+								transform: "translateX(-6px) translateY(4px)",
+								paddingInline: "10px",
+								color: "#e9e9ec",
+								textShadow: `
+	0 1px 1px rgba(0,0,0,.9),
+	0 -1px 0 rgba(255,255,255,.18),
+	0 0 6px rgba(255,255,255,.08)
+`,
+								filter: "drop-shadow(0 3px 2px rgba(0,0,0,.65))",
 							}}
 						>
 							{displayGear}
 						</div>
 
+						{/* Speed */}
 						<div
 							className="
+								mt-5
 								flex
 								flex-col
 								items-center
@@ -299,21 +309,33 @@ export function GearCell() {
 							<div
 								className="
 									font-mono
-									text-[18px]
+									text-[20px]
 									font-black
-									tracking-[0.12em]
-									text-white
+									leading-none
+									tracking-[0.05em]
+									text-zinc-100
 								"
+								style={{
+									textShadow: "0 0 8px rgba(255,255,255,.15)",
+								}}
 							>
 								{formatNumber(speedDisplay, 0)}
 							</div>
 
+							<div
+								className="
+									h-[1px]
+									w-12
+									bg-zinc-700/60
+								"
+							/>
+
 							<span
 								className="
-									text-[8px]
+									text-[9px]
 									font-bold
-									tracking-[0.4em]
-									text-zinc-600
+									tracking-[0.5em]
+									text-zinc-500
 									racing-text
 								"
 							>
