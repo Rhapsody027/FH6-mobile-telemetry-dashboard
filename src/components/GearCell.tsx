@@ -286,10 +286,10 @@ export function GearCell() {
 								paddingInline: "10px",
 								color: "#e9e9ec",
 								textShadow: `
-	0 1px 1px rgba(0,0,0,.9),
-	0 -1px 0 rgba(255,255,255,.18),
-	0 0 6px rgba(255,255,255,.08)
-`,
+									0 1px 1px rgba(0,0,0,.9),
+									0 -1px 0 rgba(255,255,255,.18),
+									0 0 6px rgba(255,255,255,.08)
+								`,
 								filter: "drop-shadow(0 3px 2px rgba(0,0,0,.65))",
 							}}
 						>
