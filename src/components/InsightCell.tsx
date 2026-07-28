@@ -37,7 +37,6 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				gap-x-2
 				gap-y-2
 				overflow-hidden
-				
 				px-3
 				py-2
 			"
@@ -91,7 +90,8 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				className={`
 					h-6
 					min-w-0
-					bg-black/60
+					rounded-sm
+					bg-[#050507]
 					px-2
 					font-mono
 					text-[9px]
@@ -100,7 +100,14 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 					outline-none
 					placeholder:text-zinc-700
 					transition-all
-					focus:border-zinc-600
+					duration-150
+
+					border
+					${
+						isEditing
+							? "border-zinc-600 shadow-[inset_0_2px_6px_rgba(0,0,0,0.9),0_0_8px_rgba(255,255,255,0.08)]"
+							: "border-zinc-900 shadow-[inset_0_2px_8px_rgba(0,0,0,0.85)]"
+					}
 
 					${isEditing ? "w-[130px]" : "w-full"}
 				`}
