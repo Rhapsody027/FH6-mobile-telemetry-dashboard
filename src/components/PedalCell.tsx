@@ -21,11 +21,20 @@ export function PedalCell() {
 		(state: TelemetryStoreState) => state.pedalOverlap,
 	);
 
+	const idleMode = !telemetry;
+
 	const throttle = telemetry?.throttle ?? 0;
 	const brake = telemetry?.brake ?? 0;
 
 	return (
-		<div className="relative flex h-full w-full items-center justify-center rounded-[20px] bg-black/20 p-[clamp(4px,1.2vw,10px)] backdrop-blur-[1px]">
+		<div
+			className="relative flex h-full w-full items-center justify-center rounded-[20px] bg-black/20 p-[clamp(4px,1.2vw,10px)] backdrop-blur-[1px] transition-opacity duration-500 ease-out"
+			style={{
+				// Only dim while idle (no telemetry). Driving is always
+				// full opacity, unaffected by this.
+				opacity: idleMode ? 0.4 : 1,
+			}}
+		>
 			<div className="flex h-full w-full max-w-[180px] flex-col items-center justify-center">
 				<div className="flex h-full w-full items-center justify-center gap-x-0">
 					{/* THR */}

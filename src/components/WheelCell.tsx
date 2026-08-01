@@ -69,7 +69,9 @@ export function WheelCell({ cornerKey }: { cornerKey: CornerKey }) {
 	let outerBorderStyle: React.CSSProperties = {
 		borderRadius: "5px",
 		padding: "3px", // 確保外框厚度絕對固定為 3px
-		transition: "transform 0.08s ease-out", // 控制卡鉗向內夾緊動態的平滑度
+		// 🔧 加入 opacity 的 transition，讓待機/駕駛切換時的亮度變化是淡入淡出，
+		// 不是瞬間跳動，跟卡鉗夾緊動態各自獨立時長。
+		transition: "transform 0.08s ease-out, opacity 0.5s ease-out",
 	};
 
 	let outerBg = "#1a1b23"; // 預設暗灰色
@@ -226,11 +228,13 @@ export function WheelCell({ cornerKey }: { cornerKey: CornerKey }) {
 
 					{/* 🚀 【F1 實體外框】 (Z-20) 
                          - 利用 outerBg 統一渲染 3px 的失控紅/卡鉗橘漸層
-                         - 利用 transform: tireScale 實現煞車鎖死向內微縮(夾緊)動態 */}
+                         - 利用 transform: tireScale 實現煞車鎖死向內微縮(夾緊)動態
+                         - 🔧 待機時不再壓到 0.25 那麼死暗，拉到 0.55，
+                           駕駛時（stale=false）維持原本 1 不變 */}
 					<div
 						className="absolute inset-0 overflow-hidden z-20"
 						style={{
-							opacity: stale ? 0.25 : 1,
+							opacity: stale ? 0.55 : 1,
 							background: outerBg,
 							transform: tireScale,
 							boxShadow:

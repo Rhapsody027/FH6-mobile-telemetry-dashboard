@@ -1,7 +1,7 @@
 # fh6-hub/discovery.py
 import socket
 
-from zeroconf import IPVersion, ServiceInfo
+from zeroconf import IPVersion, NonUniqueNameException, ServiceInfo
 from zeroconf.asyncio import AsyncZeroconf
 
 
@@ -10,6 +10,7 @@ class HubDiscovery:
         self.port = port
         self.aio_zeroconf = None
         self.service_info = None
+        self.is_registered = False
         # 🚀 產品化規格：使用固定且具有識別性的 Device ID
         self.device_id = "time4ttack-fh6-hub-device"
 
@@ -29,6 +30,7 @@ class HubDiscovery:
 
     async def start(self):
         self.aio_zeroconf = AsyncZeroconf(ip_version=IPVersion.V4Only)
+        self.is_registered = False
         local_ip = self.get_local_ip()
         hostname = socket.gethostname()
 
@@ -53,10 +55,27 @@ class HubDiscovery:
 
         print(f"[mDNS] 正在廣播服務: {self.service_info.name}")
         print(f"[mDNS] 廣播 IP: {local_ip}:{self.port}")
-        await self.aio_zeroconf.async_register_service(self.service_info)
+        try:
+            await self.aio_zeroconf.async_register_service(
+                self.service_info,
+                allow_name_change=True,
+            )
+            self.is_registered = True
+        except NonUniqueNameException as exc:
+            print(f"[mDNS] 服務名稱衝突，略過廣播但 Hub 仍繼續啟動: {exc}")
+            self.service_info = None
+            self.is_registered = False
+            await self.aio_zeroconf.async_close()
+            self.aio_zeroconf = None
 
     async def stop(self):
-        if self.aio_zeroconf and self.service_info:
+        if self.aio_zeroconf and self.service_info and self.is_registered:
             print("[mDNS] 正在註銷服務...")
             await self.aio_zeroconf.async_unregister_service(self.service_info)
             await self.aio_zeroconf.async_close()
+        elif self.aio_zeroconf:
+            await self.aio_zeroconf.async_close()
+
+        self.aio_zeroconf = None
+        self.service_info = None
+        self.is_registered = False

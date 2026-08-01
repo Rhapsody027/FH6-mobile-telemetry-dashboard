@@ -52,9 +52,18 @@ async def start_hub_services():
 
     # 2. 啟動 UDP 接收
     loop = asyncio.get_running_loop()
-    udp_transport, protocol = await loop.create_datagram_endpoint(
-        lambda: FH6UDPProtocol(handle_raw_packet), local_addr=("0.0.0.0", 5300)
-    )
+    try:
+        udp_transport, protocol = await loop.create_datagram_endpoint(
+            lambda: FH6UDPProtocol(handle_raw_packet),
+            local_addr=("0.0.0.0", 5300),
+        )
+    except OSError as exc:
+        await discovery_service.stop()
+        if getattr(exc, "winerror", None) == 10048:
+            raise RuntimeError(
+                "UDP port 5300 is already in use. Another FH6 Hub may already be running."
+            ) from exc
+        raise
 
     hub_running = True
     print("[Hub] 服務啟動完成！持續監聽中...")
@@ -149,5 +158,7 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
+    except RuntimeError as exc:
+        print(f"[Hub] 啟動失敗: {exc}")
     except KeyboardInterrupt:
         print("\n[Hub] 服務已手動關閉。")

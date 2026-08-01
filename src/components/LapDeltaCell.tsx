@@ -1,3 +1,4 @@
+// src/components/LapDeltaCell.tsx
 import { useTelemetryStore, type TelemetryStoreState } from "../useTelemetry";
 
 function formatNumber(value: number, fractionDigits = 0): string {
@@ -17,6 +18,8 @@ export function LapDeltaCell() {
 	);
 
 	const stale = useTelemetryStore((state: TelemetryStoreState) => state.stale);
+
+	const idleMode = !telemetry;
 
 	const delta = telemetry?.lapDelta;
 
@@ -40,7 +43,15 @@ export function LapDeltaCell() {
 				bg-black/10
 				backdrop-blur-[1px]
 				px-2
+				transition-opacity
+				duration-500
+				ease-out
 			"
+			style={{
+				// Only dim while idle (no telemetry). Driving is always
+				// full opacity, unaffected by this.
+				opacity: idleMode ? 0.4 : 1,
+			}}
 		>
 			<div
 				className="
