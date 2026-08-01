@@ -88,10 +88,19 @@ async def stop_hub_services():
 
 
 def build_tray_icon(on_exit_callback):
-    def show_pairing_qr():
+    def show_pairing_qr(icon=None):
         pair_url = discovery_service.get_pair_url()
-        print(f"[QR] 顯示配對碼: {pair_url}")
-        pairing_qr.show(pair_url)
+        if pair_url:
+            print(f"[QR] 顯示配對碼: {pair_url}")
+            pairing_qr.show(pair_url)
+            return
+
+        error_message = discovery_service.get_pairing_error() or (
+            "找不到可用的 LAN IPv4，請在手機端手動輸入 IP，PORT 會自動固定為 8765。"
+        )
+        print(f"[QR] {error_message}")
+        if icon:
+            icon.notify(error_message, "Time4ttack FH6 Hub")
 
     def toggle_hub_state(icon, item):
         global hub_running
@@ -111,7 +120,7 @@ def build_tray_icon(on_exit_callback):
 
     menu = pystray.Menu(
         pystray.MenuItem(get_hub_status_text, toggle_hub_state),
-        pystray.MenuItem("顯示配對 QR", lambda icon, item: show_pairing_qr()),
+        pystray.MenuItem("顯示配對 QR", lambda icon, item: show_pairing_qr(icon)),
         pystray.MenuItem(
             "開機自動啟動",
             toggle_autostart,
@@ -136,7 +145,13 @@ async def main():
 
     # 預設啟動服務
     await start_hub_services()
-    pairing_qr.show(discovery_service.get_pair_url())
+    pair_url = discovery_service.get_pair_url()
+    if pair_url:
+        pairing_qr.show(pair_url)
+    else:
+        print(
+            f"[QR] {discovery_service.get_pairing_error() or '找不到可用的 LAN IPv4，已停用 QR 配對。'}"
+        )
 
     # 啟動 WebSocket 常駐監聽
     async with websockets.serve(ws_server.register, "0.0.0.0", 8765) as ws_inst:

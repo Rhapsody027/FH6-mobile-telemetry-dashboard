@@ -19,6 +19,7 @@ Set-Location fh6-hub
 Notes:
 
 - QR pairing is the primary entry path.
+- QR pairing uses the real LAN IPv4 of the Hub host. If no usable LAN IP is found, the hub keeps running, skips QR generation, and the phone can still connect by manual IP input with port `8765`.
 - mDNS discovery is best-effort; if a service name conflict happens, the hub still continues running.
 - If UDP port `5300` is already taken by another process, the hub cannot receive telemetry until that process exits.
 

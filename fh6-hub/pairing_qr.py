@@ -1,5 +1,6 @@
 import os
 import tempfile
+from typing import Optional
 
 import qrcode
 
@@ -24,7 +25,10 @@ class PairingQR:
         image.save(self.output_path)
         return self.output_path
 
-    def show(self, pair_url: str) -> str:
+    def show(self, pair_url: Optional[str]) -> str | None:
+        if not pair_url:
+            return None
+
         path = self.generate(pair_url)
         try:
             os.startfile(path)

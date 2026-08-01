@@ -1,8 +1,42 @@
 # fh6-hub/discovery.py
+import ipaddress
 import socket
+from typing import Optional
 
+import ifaddr
 from zeroconf import IPVersion, NonUniqueNameException, ServiceInfo
 from zeroconf.asyncio import AsyncZeroconf
+
+BLOCKED_ADAPTER_KEYWORDS = (
+    "virtual",
+    "loopback",
+    "docker",
+    "tailscale",
+    "vpn",
+    "hamachi",
+    "wireguard",
+    "hyper-v",
+    "vbox",
+    "vmware",
+    "bridge",
+    "bluetooth",
+    "pseudo",
+    "tap",
+    "tun",
+    "wsl",
+    "teredo",
+    "wi-fi direct",
+    "wireless direct",
+)
+
+PREFERRED_ADAPTER_KEYWORDS = (
+    "wi-fi",
+    "wifi",
+    "wireless",
+    "ethernet",
+    "gbe",
+    "lan",
+)
 
 
 class HubDiscovery:
@@ -11,27 +45,86 @@ class HubDiscovery:
         self.aio_zeroconf = None
         self.service_info = None
         self.is_registered = False
+        self.last_error: str | None = None
         # 🚀 產品化規格：使用固定且具有識別性的 Device ID
         self.device_id = "time4ttack-fh6-hub-device"
 
-    def get_local_ip(self) -> str:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-        except Exception:
-            ip = "127.0.0.1"
-        finally:
-            s.close()
-        return ip
+    def _is_blocked_adapter(self, adapter_name: str) -> bool:
+        lower_name = adapter_name.lower()
+        return any(keyword in lower_name for keyword in BLOCKED_ADAPTER_KEYWORDS)
 
-    def get_pair_url(self) -> str:
-        return f"time4ttack://pair?host={self.get_local_ip()}&port={self.port}"
+    def _adapter_score(self, adapter_name: str) -> int:
+        lower_name = adapter_name.lower()
+        score = 0
+        for keyword in PREFERRED_ADAPTER_KEYWORDS:
+            if keyword in lower_name:
+                score += 10
+        if "realtek" in lower_name or "intel" in lower_name:
+            score += 5
+        return score
+
+    def get_local_ip(self) -> Optional[str]:
+        candidates: list[tuple[int, int, str]] = []
+
+        for order, adapter in enumerate(ifaddr.get_adapters()):
+            adapter_name = getattr(adapter, "nice_name", "") or ""
+            if self._is_blocked_adapter(adapter_name):
+                continue
+
+            adapter_score = self._adapter_score(adapter_name)
+
+            for address in adapter.ips:
+                ip_value = getattr(address, "ip", None)
+                if not isinstance(ip_value, str):
+                    continue
+
+                try:
+                    ipv4 = ipaddress.IPv4Address(ip_value)
+                except ipaddress.AddressValueError:
+                    continue
+
+                if (
+                    ipv4.is_loopback
+                    or ipv4.is_link_local
+                    or ipv4.is_multicast
+                    or ipv4.is_reserved
+                    or not ipv4.is_private
+                ):
+                    continue
+
+                candidates.append((adapter_score, order, str(ipv4)))
+
+        if not candidates:
+            self.last_error = (
+                "找不到可用的 LAN IPv4，請確認 Hub 主機已連上同一個 Wi‑Fi 或乙太網路。"
+            )
+            return None
+
+        candidates.sort(key=lambda item: (-item[0], item[1]))
+        self.last_error = None
+        return candidates[0][2]
+
+    def get_pair_url(self) -> Optional[str]:
+        local_ip = self.get_local_ip()
+        if not local_ip:
+            return None
+
+        return f"time4ttack://pair?host={local_ip}&port={self.port}"
+
+    def get_pairing_error(self) -> str | None:
+        return self.last_error
 
     async def start(self):
         self.aio_zeroconf = AsyncZeroconf(ip_version=IPVersion.V4Only)
         self.is_registered = False
         local_ip = self.get_local_ip()
+
+        if not local_ip:
+            print(f"[mDNS] {self.last_error}")
+            await self.aio_zeroconf.async_close()
+            self.aio_zeroconf = None
+            return False
+
         hostname = socket.gethostname()
 
         # 🚀 產品化規格：Properties 屬性對齊
@@ -67,6 +160,8 @@ class HubDiscovery:
             self.is_registered = False
             await self.aio_zeroconf.async_close()
             self.aio_zeroconf = None
+
+        return self.is_registered
 
     async def stop(self):
         if self.aio_zeroconf and self.service_info and self.is_registered:
