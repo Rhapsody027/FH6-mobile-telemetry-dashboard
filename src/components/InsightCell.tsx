@@ -1,11 +1,17 @@
 // src/components/InsightCell.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TelemetryStoreState } from "../useTelemetry";
 import { useTelemetryStore } from "../useTelemetry";
 
 export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 	const [ipInput, setIpInput] = useState(telemetry.hubIp);
 	const [isEditing, setIsEditing] = useState(false);
+
+	useEffect(() => {
+		if (!isEditing) {
+			setIpInput(telemetry.hubIp);
+		}
+	}, [telemetry.hubIp, isEditing]);
 
 	const setHubIp = useTelemetryStore((state) => state.setHubIp);
 	const initWebSocket = useTelemetryStore((state) => state.initWebSocket);
@@ -41,7 +47,6 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				py-2
 			"
 		>
-			{/* Title */}
 			<div
 				className="
 					min-w-0
@@ -58,7 +63,6 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				FH6 Dashboard
 			</div>
 
-			{/* Status LED */}
 			<div
 				className={`
 					justify-self-center
@@ -76,10 +80,8 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				title={pairState}
 			/>
 
-			{/* Divider */}
 			<div className="col-span-2 h-px bg-zinc-800" />
 
-			{/* IP Input */}
 			<input
 				value={ipInput}
 				onChange={(e) => setIpInput(e.target.value)}
@@ -113,7 +115,6 @@ export function InsightCell({ telemetry }: { telemetry: TelemetryStoreState }) {
 				`}
 			/>
 
-			{/* Action */}
 			<button
 				onClick={handleConnect}
 				className="
