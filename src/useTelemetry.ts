@@ -108,6 +108,25 @@ let reconnectTimer: any = null;
 let connectTimeoutTimer: any = null;
 let isNativeListenerAttached = false;
 const ENABLE_MDNS_DISCOVERY = false;
+let pendingTelemetry: BackendTelemetryData | null = null;
+let telemetryFramePending = false;
+
+function scheduleTelemetryUpdate(update: (data: BackendTelemetryData) => void) {
+	if (telemetryFramePending) return;
+
+	telemetryFramePending = true;
+
+	requestAnimationFrame(() => {
+		telemetryFramePending = false;
+
+		if (!pendingTelemetry) return;
+
+		const latest = pendingTelemetry;
+		pendingTelemetry = null;
+
+		update(latest);
+	});
+}
 
 function parseHubEndpoint(target: string): { host: string; port: number } {
 	const trimmed = target.trim();
@@ -247,21 +266,17 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => {
 				};
 
 				activeWs.onmessage = (e) => {
-					console.time("ws_receive");
-
 					try {
 						const parsed = JSON.parse(e.data);
 
 						if (parsed.type === "telemetry" && parsed.data) {
-							console.time("update");
+							pendingTelemetry = parsed.data;
 
-							get().updateTelemetry(parsed.data);
-
-							console.timeEnd("update");
+							scheduleTelemetryUpdate((data) => {
+								get().updateTelemetry(data);
+							});
 						}
 					} catch {}
-
-					console.timeEnd("ws_receive");
 				};
 
 				activeWs.onclose = () => {
