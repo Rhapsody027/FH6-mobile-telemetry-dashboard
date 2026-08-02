@@ -247,11 +247,21 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => {
 				};
 
 				activeWs.onmessage = (e) => {
+					console.time("ws_receive");
+
 					try {
 						const parsed = JSON.parse(e.data);
-						if (parsed.type === "telemetry" && parsed.data)
+
+						if (parsed.type === "telemetry" && parsed.data) {
+							console.time("update");
+
 							get().updateTelemetry(parsed.data);
+
+							console.timeEnd("update");
+						}
 					} catch {}
+
+					console.timeEnd("ws_receive");
 				};
 
 				activeWs.onclose = () => {
