@@ -6,7 +6,7 @@
 
 React 19 · TypeScript · Zustand · Tailwind CSS · Capacitor (iOS) · Python asyncio Hub for Windows
 
-[**▶ Live demo**](https://rhapsody027.github.io/Time4ttack/) — runs on simulated telemetry, no game required
+[**▶ Live demo**](https://rhapsody027.github.io/FH6-mobile-telemetry-dashboard/) — runs on simulated telemetry, no game required
 
 </div>
 
