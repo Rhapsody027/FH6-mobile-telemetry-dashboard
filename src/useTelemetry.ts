@@ -2,6 +2,11 @@
 import { useEffect, useRef } from "react";
 import { create } from "zustand";
 import { App } from "@capacitor/app";
+import {
+	createDemoFrame,
+	demoStartOffsetSeconds,
+	isDemoRequested,
+} from "./demoTelemetry";
 
 export type CornerKey = "fl" | "fr" | "rl" | "rr";
 export type Quad = Record<CornerKey, number>;
@@ -150,6 +155,34 @@ function parseHubEndpoint(target: string): { host: string; port: number } {
 	}
 }
 
+// ── Offline demo loop (see demoTelemetry.ts) ────────────────────────────
+let demoFrameId: number | null = null;
+
+function startDemoTelemetry() {
+	if (demoFrameId !== null) return;
+	const startedAt = performance.now() - demoStartOffsetSeconds() * 1000;
+	// Leave the manual-IP field empty so pairing with a real Hub is one tap away.
+	useTelemetryStore.setState({ hubIp: "" });
+
+	const tick = (now: number) => {
+		const { data, lapDelta } = createDemoFrame((now - startedAt) / 1000);
+		useTelemetryStore.getState().updateTelemetry(data);
+		const telemetry = useTelemetryStore.getState().telemetry;
+		if (telemetry) {
+			useTelemetryStore.setState({ telemetry: { ...telemetry, lapDelta } });
+		}
+		demoFrameId = requestAnimationFrame(tick);
+	};
+	demoFrameId = requestAnimationFrame(tick);
+}
+
+function stopDemoTelemetry() {
+	if (demoFrameId === null) return;
+	cancelAnimationFrame(demoFrameId);
+	demoFrameId = null;
+	useTelemetryStore.getState().setDisconnected();
+}
+
 export function buildWebSocketUrl(target: string): string {
 	const endpoint = parseHubEndpoint(target);
 	if (!endpoint.host) return "ws://localhost:8765";
@@ -210,6 +243,8 @@ export const useTelemetryStore = create<TelemetryStoreState>((set, get) => {
 		},
 
 		initWebSocket: (targetIp) => {
+			// Manual IP / QR pairing always takes over from the demo.
+			stopDemoTelemetry();
 			const activeTarget = targetIp || get().hubIp;
 			const url = buildWebSocketUrl(activeTarget);
 
@@ -469,6 +504,13 @@ export function useTelemetry() {
 	const autoStartRef = useRef(false);
 
 	useEffect(() => {
+		if (!isDemoRequested()) return;
+		startDemoTelemetry();
+		return () => stopDemoTelemetry();
+	}, []);
+
+	useEffect(() => {
+		if (isDemoRequested()) return;
 		if (autoStartRef.current) return;
 		autoStartRef.current = true;
 

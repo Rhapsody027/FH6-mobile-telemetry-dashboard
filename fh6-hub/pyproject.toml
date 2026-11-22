@@ -1,7 +1,7 @@
 [project]
 name = "fh6-hub"
 version = "0.1.0"
-description = "Add your description here"
+description = "Windows tray hub that relays Forza Horizon UDP telemetry to the mobile dashboard over WebSocket, with QR pairing."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

@@ -16,6 +16,8 @@ Set-Location fh6-hub
 .\.venv\Scripts\python.exe main.py
 ```
 
+To exercise the full pipeline without the game, run `mock.py` in a second terminal: it sends 60 Hz synthetic Forza packets to `127.0.0.1:5300`.
+
 Notes:
 
 - QR pairing is the primary entry path.

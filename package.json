@@ -1,6 +1,5 @@
 {
 	"name": "fh6",
-	"module": "index.ts",
 	"type": "module",
 	"private": true,
 	"scripts": {
