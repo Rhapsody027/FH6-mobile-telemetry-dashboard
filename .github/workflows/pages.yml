@@ -5,7 +5,7 @@ name: Deploy demo to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["src/**", "index.html", "vite.config.ts", "package.json", "bun.lock", ".github/workflows/pages.yml"]
+    paths: ["src/**", "index.html", "vite.config.ts", "package.json", "bun.lock", ".github/workflows/**"]
   workflow_dispatch:
 
 permissions:
