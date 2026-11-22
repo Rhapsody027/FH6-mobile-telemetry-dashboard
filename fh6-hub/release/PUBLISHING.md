@@ -40,6 +40,7 @@ Required checks before tagging:
 - Primary artifact: installer EXE.
 - Fallback artifact: bundle ZIP.
 - Always publish checksum file.
+- Binaries are uploaded to GitHub Releases, never committed: `release/windows/` and `out/` are git-ignored.
 - Keep release notes with known issues and rollback notes.
 
 ## 5. Suggested Versioning
