@@ -12,6 +12,12 @@ from tray import create_default_icon, is_autostart_enabled, set_autostart
 from udp_receiver import FH6UDPProtocol
 from ws import TelemetryWSServer
 
+# Log lines are in Chinese; on a non-UTF-8 console/pipe (e.g. cp1252) a plain
+# print() would raise UnicodeEncodeError and kill the Hub at startup.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="replace")
+
 # 全域遙測與伺服器實例
 ws_server = TelemetryWSServer()
 discovery_service = HubDiscovery(port=8765)
